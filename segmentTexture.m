@@ -1,4 +1,4 @@
-function [ feature2DImage, Aseg1, Aseg2 ] = segmentTexture(I)
+function [ feature2DImage, Mask] = segmentTexture(I)
 %SEGMENTTEXTURE Texture Segmentation Using Gabor Filters.
 %
 % Design an array of Gabor Filters which are tuned to different frequencies 
@@ -80,7 +80,6 @@ X = bsxfun(@rdivide,X,std(X));
 % features look like, Principal Component Analysis can be used to move from
 % a 26-D representation of each pixel in the input image into a 1-D
 % intensity value for each pixel.
-
 coeff = pca(X);
 feature2DImage = reshape(X*coeff(:,1),numRows,numCols);
 
@@ -93,15 +92,16 @@ feature2DImage = reshape(X*coeff(:,1),numRows,numCols);
 % this case. This part requires the Statistics and Machine Learning Toolbox.
 L = kmeans(X,2,'Replicates',5);
 L = reshape(L,[numRows numCols]);
+Mask = L < 2;
 
 % Examine the foreground and background images that result from the mask BW 
 % that is associated with the label matrix L.
-Aseg1 = zeros(size(I),'like',I);
-Aseg2 = zeros(size(I),'like',I);
-BW = L == 2;
-BW = repmat(BW,[1 1]);
-Aseg1(BW) = I(BW);
-Aseg2(~BW) = I(~BW);
+% Aseg1 = zeros(size(I),'like',I);
+% Aseg2 = zeros(size(I),'like',I);
+% BW = L == 0;
+% BW = repmat(BW,[1 1]);
+% Aseg1(BW) = I(BW);
+% Aseg2(~BW) = I(~BW);
 
 end
 

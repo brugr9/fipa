@@ -1,4 +1,4 @@
-function directionmap(D, s, I)
+function [x,y,u,v] = directionmap(D, s, I)
 % DIRECTIONMAP - plot direction map
 %
 %  Usage:   directionmap(D, s, I)
@@ -36,7 +36,7 @@ function directionmap(D, s, I)
     v = yoff*2;
     
     % plot
-    imshow(I); alpha .5; hold on;
-    quiver(x,y,u,v,0,'.','linewidth',1);
-    axis off;
-    hold off;
+%     imshow(I); alpha .5; hold on;
+%     quiver(x,y,u,v,0,'.','linewidth',1);
+%     axis off;
+%     hold off;
