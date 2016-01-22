@@ -29,7 +29,6 @@ clear variables; clear globals; close all; clc;
 %  University of Bologna, Online: <http://bias.csr.unibo.it/fvc2004/>).
 %  We assume the image is in grayscales (white: 255, black: 0).
 
-% I = imread('../FVC2004/DB3_B/103_6.tif');
 I = imread('../fp-images/11_4.png');
 [sizeX, sizeY] = size(I);
 figure; imshow(I); axis off; title('Original Image');
