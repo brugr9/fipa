@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>Fingerprint Analysis: Preprocessing and Feature Extraction</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-01-22"><meta name="DC.source" content="fingerprint.m"><style type="text/css">
+      --><title>Fingerprint Analysis: Preprocessing and Feature Extraction</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-01-23"><meta name="DC.source" content="main.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -73,22 +73,15 @@ Biel/Bienne, January 2016</pre><pre>References:</pre><pre>Maltoni, D. et al.: Ha
 chapter 3: Fingerprint Analysis and Representation. Springer 2009.</pre><pre>Bazen, Asker M. and Gerez, Sabih H.: Systematic Methods for the Computation
 of the Directional Fields and Singular Points of Fingerprints.
 IEEE Transactions on Pattern Analysis and Machine Intelligence, vol. 24,
-No. 7, July 2002 (p. 905-919).</pre><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">1) Capture</a></li><li><a href="#3">2) Preprocessing</a></li><li><a href="#4">2.1) Quality Enhancement</a></li><li><a href="#6">2.2) Variance, Quality and Segmentation</a></li><li><a href="#8">2.3) Gradients, directions and coherence</a></li><li><a href="#9">Gradients Gx and Gy</a></li><li><a href="#10">Local ridge orientation D (in radiant)</a></li><li><a href="#11">Coherence C as reliability of orientation</a></li><li><a href="#12">Enhance segmentation using binarized coherence</a></li><li><a href="#14">Maskerading</a></li><li><a href="#16">2.4) Binarisation and skeleton</a></li><li><a href="#18">3.) Feature Extraction</a></li><li><a href="#19">3.1) Global Features</a></li><li><a href="#20">Candidate region(s)</a></li><li><a href="#21">Global features</a></li><li><a href="#22">3.2) Minutiae</a></li><li><a href="#23">3.2.1) Ridge endings</a></li><li><a href="#24">3.2.2) Bifurcations</a></li></ul></div><p>Clear matrices, close figures and clear cmd wnd.</p><pre class="codeinput">clear <span class="string">variables</span>; clear <span class="string">globals</span>; close <span class="string">all</span>; clc;
+No. 7, July 2002 (p. 905-919).</pre><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">1) Capture</a></li><li><a href="#3">2) Preprocessing</a></li><li><a href="#4">2.1) Quality Enhancement</a></li><li><a href="#5">2.2) Variance, Quality and Segmentation</a></li><li><a href="#6">2.3) Gradients, directions and coherence</a></li><li><a href="#7">Gradients Gx and Gy</a></li><li><a href="#8">Local ridge orientation D (in radiant)</a></li><li><a href="#9">Coherence C as reliability of orientation</a></li><li><a href="#10">Maskerading</a></li><li><a href="#11">2.4) Binarisation and skeleton</a></li><li><a href="#12">3.) Feature Extraction</a></li><li><a href="#13">3.1) Global Features</a></li><li><a href="#14">Candidate region(s)</a></li><li><a href="#15">Global features</a></li><li><a href="#16">3.2) Minutiae</a></li><li><a href="#17">3.2.1) Ridge endings</a></li><li><a href="#18">3.2.2) Bifurcations</a></li></ul></div><p>Clear matrices, close figures and clear cmd wnd.</p><pre class="codeinput">clear <span class="string">variables</span>; clear <span class="string">globals</span>; close <span class="string">all</span>; clc;
 </pre><h2>1) Capture<a name="2"></a></h2><pre>Our capture is reduced to a read in of a raw fingerprint image. We use
 fingerprint images from FVC 2004, database 3, set B (see International
 Competition for Fingerprint Verification Algorithms 2004, BioLab,
 University of Bologna, Online: &lt;http://bias.csr.unibo.it/fvc2004/&gt;).
-We assume the image is in grayscales (white: 255, black: 0).</pre><pre class="codeinput">
-I = imread(<span class="string">'../fp-images/11_4.png'</span>);
+We assume the image is in grayscales (white: 255, black: 0).</pre><pre class="codeinput">I = imread(<span class="string">'./fp-images/11_4.png'</span>);
 [sizeX, sizeY] = size(I);
 figure; imshow(I); axis <span class="string">off</span>; title(<span class="string">'Original Image'</span>);
-</pre>
-
-<img vspace="5" hspace="5" src="1-capture-1-original.jpg" alt=""> 
-
-
-
-<h2>2) Preprocessing<a name="3"></a></h2><h2>2.1) Quality Enhancement<a name="4"></a></h2><p>To largen the image quality we apply a high-pass filter (Laplacian of Gaussian LoG). First, we transform the image to its frequency domain using a Fast Fourier Transformation (FFT) and a shift. Then we augment the amplitude of the dominant frequencies over relatively small regions and finally retransform the image back to the spatial domain by the use of an inverse FFT (IFFT).</p><pre class="codeinput">hsize = 3;
+</pre><img vspace="5" hspace="5" src="main_01.png" alt=""> <h2>2) Preprocessing<a name="3"></a></h2><h2>2.1) Quality Enhancement<a name="4"></a></h2><p>To largen the image quality we apply a high-pass filter (Laplacian of Gaussian LoG). First, we transform the image to its frequency domain using a Fast Fourier Transformation (FFT) and a shift. Then we augment the amplitude of the dominant frequencies over relatively small regions and finally retransform the image back to the spatial domain by the use of an inverse FFT (IFFT).</p><pre class="codeinput">hsize = 3;
 border = (hsize-1)/2;
 hsigma = 0.2;
 h = fspecial(<span class="string">'log'</span>, hsize, hsigma);
@@ -97,33 +90,24 @@ J = fftshift(fft2(double(I)));
 Jh = conv2(J,h);
 Jh = Jh(1+border:end-border,1+border:end-border);
 Ih = abs(ifft2(ifftshift(Jh)));
-</pre><pre class="codeinput">figure; imshow(log(max(abs(J),    1e-6)),[]), colormap(jet(64)); axis <span class="string">off</span>; title(<span class="string">'Amplitudes'</span>); hold <span class="string">off</span>;
+
+figure; imshow(log(max(abs(J),    1e-6)),[]), colormap(jet(64)); axis <span class="string">off</span>; title(<span class="string">'Amplitudes'</span>); hold <span class="string">off</span>;
 figure; imshow(log(max(abs(Jh), 1e-6)),[]), colormap(jet(64)); axis <span class="string">off</span>; title(<span class="string">'After LoG'</span>);  hold <span class="string">off</span>;
 figure; imshow(Ih, []); axis <span class="string">off</span>; title(<span class="string">'Reslut'</span>); hold <span class="string">off</span>;
-</pre>
-
-<img vspace="5" hspace="5" src="2-preprocessing-1a-amplitudes.jpg" alt=""> 
-<img vspace="5" hspace="5" src="2-preprocessing-1b-afterLoG.jpg" alt=""> 
-<img vspace="5" hspace="5" src="2-preprocessing-1c-result.jpg" alt=""> 
-
-<h2>2.2) Variance, Quality and Segmentation<a name="6"></a></h2><p>Segmentation using Gabor filters, cp. Maltoni, chapter 3.4 Segmentation (p. 116-119).</p><pre class="codeinput">[V, Mask] = segmentTexture(I);
+</pre><img vspace="5" hspace="5" src="main_02.png" alt=""> <img vspace="5" hspace="5" src="main_03.png" alt=""> <img vspace="5" hspace="5" src="main_04.png" alt=""> <h2>2.2) Variance, Quality and Segmentation<a name="5"></a></h2><p>Segmentation using Gabor filters, cp. Maltoni, chapter 3.4 Segmentation (p. 116-119).</p><pre class="codeinput">[V, Mask] = segmentTexture(I);
 <span class="comment">% Q = TODO</span>
 Iseg = double(I).*double(Mask);
-</pre><pre class="codeinput">figure; imshow(V, []); axis <span class="string">off</span>; title(<span class="string">'Variance'</span>); hold <span class="string">off</span>;
+
+figure; imshow(V, []); axis <span class="string">off</span>; title(<span class="string">'Variance'</span>); hold <span class="string">off</span>;
 <span class="comment">% figure; imshow(Q, []); axis off; title('Quality'); hold off;</span>
 figure; imshow(Iseg, []); axis <span class="string">off</span>; title(<span class="string">'Segmented'</span>); hold <span class="string">off</span>;
-</pre>
-
-<img vspace="5" hspace="5" src="2-preprocessing-2a-variance.jpg" alt=""> 
-<img vspace="5" hspace="5" src="2-preprocessing-2c-segmented.jpg" alt=""> 
-
-<h2>2.3) Gradients, directions and coherence<a name="8"></a></h2><p>cp. Maltoni, chapter 3.2 Local Ridge Orientation, especially 3.2.1 Gradient-based approaches, p. 102-106 and Bazen/Gerez.</p><h2>Gradients Gx and Gy<a name="9"></a></h2><pre class="codeinput">hsize = 7;
+</pre><img vspace="5" hspace="5" src="main_05.png" alt=""> <img vspace="5" hspace="5" src="main_06.png" alt=""> <h2>2.3) Gradients, directions and coherence<a name="6"></a></h2><p>cp. Maltoni, chapter 3.2 Local Ridge Orientation, especially 3.2.1 Gradient-based approaches, p. 102-106 and Bazen/Gerez.</p><h2>Gradients Gx and Gy<a name="7"></a></h2><pre class="codeinput">hsize = 7;
 hsigma = 1;
 h = fspecial(<span class="string">'gaussian'</span>, hsize, hsigma);
 [hx,hy] = gradient(h);
 Gx = filter2(hx, I);
 Gy = filter2(hy, I);
-</pre><h2>Local ridge orientation D (in radiant)<a name="10"></a></h2><pre class="codeinput">hsize = 17;
+</pre><h2>Local ridge orientation D (in radiant)<a name="8"></a></h2><pre class="codeinput">hsize = 17;
 hsigma = 3;
 h = fspecial(<span class="string">'gaussian'</span>, hsize, hsigma);
 Gxy = Gx.*Gy; Gxy = 2*filter2(h, Gxy);
@@ -133,76 +117,56 @@ denom = sqrt((Gxx - Gyy).^2 + Gxy.^2) + eps;
 sin2theta = Gxy./denom;         sin2theta = filter2(h, sin2theta);
 cos2theta = (Gxx-Gyy)./denom;   cos2theta = filter2(h, cos2theta);
 D = pi/2 + atan2(sin2theta,cos2theta)/2;
-</pre><h2>Coherence C as reliability of orientation<a name="11"></a></h2><pre class="codeinput">minima = (Gyy+Gxx)/2 - (Gxx-Gyy).*cos2theta/2 - Gxy.*sin2theta/2;
+</pre><h2>Coherence C as reliability of orientation<a name="9"></a></h2><pre class="codeinput">minima = (Gyy+Gxx)/2 - (Gxx-Gyy).*cos2theta/2 - Gxy.*sin2theta/2;
 Imax = Gyy+Gxx - minima;
 z = .001;
 C = 1 - minima./(Imax+z);
 C = C.*(denom&gt;z);
-</pre><h2>Enhance segmentation using binarized coherence<a name="12"></a></h2><pre class="codeinput">thresh = graythresh(C);
-Mask2 = im2bw(C,thresh).*double(Mask);
+</pre><h2>Maskerading<a name="10"></a></h2><pre class="codeinput">GxMask = double(Gx).*double(Mask);
+GyMask = double(Gy).*double(Mask);
+DMask  = double(D) .*double(Mask);
+[x,y,u,v] = directionmap(DMask, 6, Iseg);
 CMask = double(C).*double(Mask);
-Iseg2 = Iseg.*Mask2;
-</pre><pre class="codeinput">figure; imshow(CMask,[]); axis <span class="string">off</span>; title(<span class="string">'Coherence'</span>); hold <span class="string">off</span>;
-figure; imshow(Iseg2,[]); alpha <span class="string">.5</span>; axis <span class="string">off</span>; title(<span class="string">'Segmented 2'</span>); hold <span class="string">off</span>;
+
+figure; imshow(Iseg,[]);  axis <span class="string">off</span>; title(<span class="string">'Gradients'</span>);  hold <span class="string">on</span>; quiver(GxMask,GyMask); hold <span class="string">off</span>;
+figure; imshow(Iseg,[]);  axis <span class="string">off</span>; title(<span class="string">'Directions'</span>); hold <span class="string">on</span>; quiver(x,y,u,v,0,<span class="string">'.'</span>,<span class="string">'linewidth'</span>,1); hold <span class="string">off</span>;
+figure; imshow(CMask,[]); axis <span class="string">off</span>; title(<span class="string">'Coherence'</span>);  hold <span class="string">off</span>;
 </pre>
+<img vspace="5" hspace="5" src="main_07.png" alt="">
+<img vspace="5" hspace="5" src="main_07-zoom.jpg" alt=""> <br/>
 
-<img vspace="5" hspace="5" src="2-preprocessing-3a-coherence.jpg" alt=""> 
-<img vspace="5" hspace="5" src="2-preprocessing-3b-segmented2.jpg" alt=""> 
+<img vspace="5" hspace="5" src="main_08.png" alt=""> 
+<img vspace="5" hspace="5" src="main_08-zoom.jpg" alt=""> <br/>
 
-<h2>Maskerading<a name="14"></a></h2><pre class="codeinput">GxMask = double(Gx).*double(Mask2);
-GyMask = double(Gy).*double(Mask2);
-DMask  = double(D) .*double(Mask2);
-[x,y,u,v] = directionmap(DMask, 6, Iseg2);
-</pre><pre class="codeinput">figure; imshow(Iseg2,[]); alpha <span class="string">.5</span>; axis <span class="string">off</span>; title(<span class="string">'Gradients'</span>); hold <span class="string">on</span>; quiver(GxMask,GyMask); hold <span class="string">off</span>;
-figure; imshow(Iseg2,[]); alpha <span class="string">.5</span>; axis <span class="string">off</span>; title(<span class="string">'Directions'</span>); hold <span class="string">on</span>; quiver(x,y,u,v,0,<span class="string">'.'</span>,<span class="string">'linewidth'</span>,1); hold <span class="string">off</span>;
-</pre>
-
-<img vspace="5" hspace="5" src="2-preprocessing-3c-gradients.jpg" alt=""> 
-<img vspace="5" hspace="5" src="2-preprocessing-3c-gradients-zoom.jpg" alt=""> 
-<img vspace="5" hspace="5" src="2-preprocessing-3d-directions.jpg" alt=""> 
-<img vspace="5" hspace="5" src="2-preprocessing-3d-directions-zoom.jpg" alt=""> 
-
-<h2>2.4) Binarisation and skeleton<a name="16"></a></h2><p>Binarisation by threshold (TODO: Thresholded binarisation should be replaced by local binarisation). Then we generate a skeleton by thinning the region. We remove pixels from the border and spur pixels 20 times.</p><pre class="codeinput">thresh = graythresh(I);
+<img vspace="5" hspace="5" src="main_09.png" alt=""> <h2>2.4) Binarisation and skeleton<a name="11"></a></h2><p>Binarisation by threshold (TODO: Thresholded binarisation should be replaced by local binarisation). Then we generate a skeleton by thinning the region. We remove pixels from the border and spur pixels 20 times.</p><pre class="codeinput">thresh = graythresh(I);
 binarised = im2bw(I,thresh);
 thinned  = ~bwmorph(~binarised,<span class="string">'thin'</span>,Inf); <span class="comment">% 'skel'</span>
 skeleton =  bwmorph(thinned,<span class="string">'spur'</span>,20);
 
-binarisedMask = binarised.*Mask2;
-skeletonMask = skeleton.*Mask2;
-</pre><pre class="codeinput">figure; imshow(binarisedMask,[]); axis <span class="string">off</span>; title(<span class="string">'Binarised'</span>); hold <span class="string">off</span>;
-figure; imshow(skeletonMask,[]); axis <span class="string">off</span>; title(<span class="string">'Skeleton'</span>); hold <span class="string">off</span>;
-</pre>
-<img vspace="5" hspace="5" src="2-preprocessing-4a-binarised.jpg" alt=""> 
-<img vspace="5" hspace="5" src="2-preprocessing-4b-skeleton.jpg" alt=""> 
+binarisedMask = binarised.*Mask;
+skeletonMask = skeleton.*Mask;
 
-<h2>3.) Feature Extraction<a name="18"></a></h2><h2>3.1) Global Features<a name="19"></a></h2><p>To extraxt the global features we use the coherence map. This time, we choose a large sigma for the Gaussian weighting used to sum the gradient moments (cp. Maltoni, p. 124). Then we extract the minima and find the coordinates of global features.</p><pre class="codeinput">[Gx2, Gy2, D2, C2] = ridgeorient(I, 1, 17, 3);
+figure; imshow(binarisedMask,[]); axis <span class="string">off</span>; title(<span class="string">'Binarised'</span>); hold <span class="string">off</span>;
+figure; imshow(skeletonMask,[]); axis <span class="string">off</span>; title(<span class="string">'Skeleton'</span>); hold <span class="string">off</span>;
+</pre><img vspace="5" hspace="5" src="main_10.png" alt=""> <img vspace="5" hspace="5" src="main_11.png" alt=""> <h2>3.) Feature Extraction<a name="12"></a></h2><h2>3.1) Global Features<a name="13"></a></h2><p>To extraxt the global features we use the coherence map. This time, we choose a large sigma for the Gaussian weighting used to sum the gradient moments (cp. Maltoni, p. 124). Then we extract the minima and find the coordinates of global features.</p><pre class="codeinput">[Gx2, Gy2, D2, C2] = ridgeorient(I, 1, 17, 3);
 C2Mask = double(C2).*double(Mask);
 minima = ~imregionalmin(C2Mask);
 
+candidateFeatures = double(~minima).*double(Mask);
+[minimaY, minimaX] = find(candidateFeatures == 1);
+
 figure; imshow(C2Mask, []); axis <span class="string">off</span>; title(<span class="string">'Coherence 2'</span>);
-figure; imshow(minima, []); axis <span class="string">off</span>; title(<span class="string">'Minima'</span>);
-</pre>
-<img vspace="5" hspace="5" src="3-feature-1a-coherence2.jpg" alt=""> 
-<img vspace="5" hspace="5" src="3-feature-1b-minima.jpg" alt=""> 
-
-
-<h2>Candidate region(s)<a name="20"></a></h2><pre class="codeinput">candidateRegion = ~im2bw(C2Mask,0.5).*double(Mask);
+figure; imshow(minima, []); axis <span class="string">off</span>; title(<span class="string">'Minima'</span>); hold <span class="string">on</span>; plot(minimaX, minimaY, <span class="string">'og'</span>, <span class="string">'MarkerSize'</span>,10); hold <span class="string">off</span>;
+</pre><img vspace="5" hspace="5" src="main_12.png" alt=""> <img vspace="5" hspace="5" src="main_13.png" alt=""> <h2>Candidate region(s)<a name="14"></a></h2><pre class="codeinput">candidateRegion = ~im2bw(C2Mask,0.5).*double(Mask);
 candidateRegionWithMinima = and(candidateRegion,double(minima));
 
 figure; imshow(candidateRegion,[]); axis <span class="string">off</span>; title(<span class="string">'Candidate Region'</span>);
 <span class="comment">% figure; imshow(candidateRegionWithMinima,[]); axis off; title('Candidate Region with Minima');</span>
-</pre>
-<img vspace="5" hspace="5" src="3-feature-1c-cand.jpg" alt=""> 
-<!-- img vspace="5" hspace="5" src="3-feature-1d-candminima.jpg" alt="" --> 
-
-<h2>Global features<a name="21"></a></h2><pre class="codeinput">featureGlobal = xor(candidateRegion,candidateRegionWithMinima);
+</pre><img vspace="5" hspace="5" src="main_14.png" alt=""> <h2>Global features<a name="15"></a></h2><pre class="codeinput">featureGlobal = xor(candidateRegion,candidateRegionWithMinima);
 [globalY, globalX] = find(featureGlobal == 1);
 
-figure; imshow(I,[]); axis <span class="string">off</span>; title(<span class="string">'Global Features'</span>); hold <span class="string">on</span>; plot(globalX, globalY, <span class="string">'*c'</span>); hold <span class="string">off</span>;
-</pre>
-<img vspace="5" hspace="5" src="3-feature-1e-globals.jpg" alt=""> 
-
-<h2>3.2) Minutiae<a name="22"></a></h2><p>cp. Maltoni, chapter 3.7 Minutiae Detection (p. 143-157). Reference: Athi Narayanan S <a href="http://sites.google.com/site/athisnarayanan/s_athi1983@yahoo.co.in">http://sites.google.com/site/athisnarayanan/s_athi1983@yahoo.co.in</a></p><pre class="codeinput">Im = ~xor(skeletonMask, Mask2);
+figure; imshow(I,[]); axis <span class="string">off</span>; title(<span class="string">'Global Features'</span>); hold <span class="string">on</span>; plot(globalX, globalY, <span class="string">'*g'</span>,<span class="string">'MarkerSize'</span>,20); hold <span class="string">off</span>;
+</pre><img vspace="5" hspace="5" src="main_15.png" alt=""> <h2>3.2) Minutiae<a name="16"></a></h2><p>cp. Maltoni, chapter 3.7 Minutiae Detection (p. 143-157). Reference: Athi Narayanan S <a href="http://sites.google.com/site/athisnarayanan/s_athi1983@yahoo.co.in">http://sites.google.com/site/athisnarayanan/s_athi1983@yahoo.co.in</a></p><pre class="codeinput">Im = ~xor(skeletonMask, Mask);
 
 <span class="comment">% Window</span>
 hsize = 3;
@@ -243,24 +207,14 @@ featureBifurcation = zeros(row,col);
 <span class="comment">% Resize area</span>
 featureRidge = featureRidge(1+border:end-border,1+border:end-border);
 featureBifurcation = featureBifurcation(1+border:end-border,1+border:end-border);
-</pre><h2>3.2.1) Ridge endings<a name="23"></a></h2><pre class="codeinput">[ridgeY, ridgeX] = find(featureRidge == 2);
-figure; imshow(skeletonMask,[]); axis <span class="string">off</span>; title(<span class="string">'Ridge endings'</span>); hold <span class="string">on</span>; plot(ridgeX, ridgeY, <span class="string">'rs'</span>); hold <span class="string">off</span>;
-figure; imshow(I,[]); axis <span class="string">off</span>; title(<span class="string">'Ridge endings'</span>); hold <span class="string">on</span>; plot(ridgeX, ridgeY, <span class="string">'rs'</span>); hold <span class="string">off</span>;
-</pre>
-<img vspace="5" hspace="5" src="3-feature-2a-ridge.jpg" alt=""> 
-<img vspace="5" hspace="5" src="3-feature-2a-ridge-skel.jpg" alt=""> 
-<img vspace="5" hspace="5" src="3-feature-2a-ridge-zoom.jpg" alt=""> 
+</pre><h2>3.2.1) Ridge endings<a name="17"></a></h2><pre class="codeinput">[ridgeY, ridgeX] = find(featureRidge == 2);
 
-
-<h2>3.2.2) Bifurcations<a name="24"></a></h2><pre class="codeinput">[bifurcationY, bifurcationX] = find(featureBifurcation == 4);
-figure; imshow(skeletonMask,[]); axis <span class="string">off</span>; title(<span class="string">'Bifurcations'</span>); hold <span class="string">on</span>; plot(bifurcationX, bifurcationY, <span class="string">'bo'</span>); hold <span class="string">off</span>;
-figure; imshow(I,[]); axis <span class="string">off</span>; title(<span class="string">'Bifurcations'</span>); hold <span class="string">on</span>; plot(bifurcationX, bifurcationY, <span class="string">'bo'</span>); hold <span class="string">off</span>;
-</pre>
-<img vspace="5" hspace="5" src="3-feature-2b-bifurcations.jpg" alt=""> 
-<img vspace="5" hspace="5" src="3-feature-2b-bifurcations-skel.jpg" alt=""> 
-<img vspace="5" hspace="5" src="3-feature-2b-bifurcations-zoom.jpg" alt=""> 
-
-<p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015b</a><br></p></div><!--
+figure; imshow(skeletonMask); axis <span class="string">off</span>; title(<span class="string">'Ridge endings'</span>); hold <span class="string">on</span>; plot(ridgeX, ridgeY, <span class="string">'ro'</span>); hold <span class="string">off</span>;
+figure; imshow(I); axis <span class="string">off</span>; title(<span class="string">'Ridge endings'</span>); hold <span class="string">on</span>; plot(ridgeX, ridgeY, <span class="string">'ro'</span>); hold <span class="string">off</span>;
+</pre><img vspace="5" hspace="5" src="main_16.jpg" alt=""> <img vspace="5" hspace="5" src="main_17.jpg" alt=""> <h2>3.2.2) Bifurcations<a name="18"></a></h2><pre class="codeinput">[bifurcationY, bifurcationX] = find(featureBifurcation == 4);
+figure; imshow(skeletonMask); axis <span class="string">off</span>; title(<span class="string">'Bifurcations'</span>); hold <span class="string">on</span>; plot(bifurcationX, bifurcationY, <span class="string">'bs'</span>); hold <span class="string">off</span>;
+figure; imshow(I); axis <span class="string">off</span>; title(<span class="string">'Bifurcations'</span>); hold <span class="string">on</span>; plot(bifurcationX, bifurcationY, <span class="string">'bs'</span>); hold <span class="string">off</span>;
+</pre><img vspace="5" hspace="5" src="main_18.jpg" alt=""> <img vspace="5" hspace="5" src="main_19.jpg" alt="">  <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Fingerprint Analysis: Preprocessing and Feature Extraction
 % *Biometric Methods, Computer Vision in MATLAB(R)*
@@ -293,8 +247,7 @@ clear variables; clear globals; close all; clc;
 %  University of Bologna, Online: <http://bias.csr.unibo.it/fvc2004/>).
 %  We assume the image is in grayscales (white: 255, black: 0).
 
-% I = imread('../FVC2004/DB3_B/103_6.tif');
-I = imread('../fp-images/11_4.png');
+I = imread('./fp-images/11_4.png');
 [sizeX, sizeY] = size(I);
 figure; imshow(I); axis off; title('Original Image');
 
@@ -315,7 +268,7 @@ J = fftshift(fft2(double(I)));
 Jh = conv2(J,h);
 Jh = Jh(1+border:end-border,1+border:end-border);
 Ih = abs(ifft2(ifftshift(Jh)));
-%%
+
 figure; imshow(log(max(abs(J),    1e-6)),[]), colormap(jet(64)); axis off; title('Amplitudes'); hold off;
 figure; imshow(log(max(abs(Jh), 1e-6)),[]), colormap(jet(64)); axis off; title('After LoG');  hold off;
 figure; imshow(Ih, []); axis off; title('Reslut'); hold off;
@@ -326,7 +279,7 @@ figure; imshow(Ih, []); axis off; title('Reslut'); hold off;
 [V, Mask] = segmentTexture(I);
 % Q = TODO
 Iseg = double(I).*double(Mask);
-%%
+
 figure; imshow(V, []); axis off; title('Variance'); hold off;
 % figure; imshow(Q, []); axis off; title('Quality'); hold off;
 figure; imshow(Iseg, []); axis off; title('Segmented'); hold off;
@@ -362,23 +315,16 @@ z = .001;
 C = 1 - minima./(Imax+z);
 C = C.*(denom>z);
 
-%% Enhance segmentation using binarized coherence
-thresh = graythresh(C);
-Mask2 = im2bw(C,thresh).*double(Mask);
-CMask = double(C).*double(Mask);
-Iseg2 = Iseg.*Mask2;
-%%
-figure; imshow(CMask,[]); axis off; title('Coherence'); hold off;
-figure; imshow(Iseg2,[]); alpha .5; axis off; title('Segmented 2'); hold off;
-
 %% Maskerading
-GxMask = double(Gx).*double(Mask2);
-GyMask = double(Gy).*double(Mask2);
-DMask  = double(D) .*double(Mask2);
-[x,y,u,v] = directionmap(DMask, 6, Iseg2);
-%%
-figure; imshow(Iseg2,[]); alpha .5; axis off; title('Gradients'); hold on; quiver(GxMask,GyMask); hold off;
-figure; imshow(Iseg2,[]); alpha .5; axis off; title('Directions'); hold on; quiver(x,y,u,v,0,'.','linewidth',1); hold off;
+GxMask = double(Gx).*double(Mask);
+GyMask = double(Gy).*double(Mask);
+DMask  = double(D) .*double(Mask);
+[x,y,u,v] = directionmap(DMask, 6, Iseg);
+CMask = double(C).*double(Mask);
+
+figure; imshow(Iseg,[]);  axis off; title('Gradients');  hold on; quiver(GxMask,GyMask); hold off;
+figure; imshow(Iseg,[]);  axis off; title('Directions'); hold on; quiver(x,y,u,v,0,'.','linewidth',1); hold off;
+figure; imshow(CMask,[]); axis off; title('Coherence');  hold off;
 
 %% 2.4) Binarisation and skeleton
 % Binarisation by threshold (TODO: Thresholded binarisation should be
@@ -389,9 +335,9 @@ binarised = im2bw(I,thresh);
 thinned  = ~bwmorph(~binarised,'thin',Inf); % 'skel'
 skeleton =  bwmorph(thinned,'spur',20);
 
-binarisedMask = binarised.*Mask2;
-skeletonMask = skeleton.*Mask2;
-%%
+binarisedMask = binarised.*Mask;
+skeletonMask = skeleton.*Mask;
+
 figure; imshow(binarisedMask,[]); axis off; title('Binarised'); hold off;
 figure; imshow(skeletonMask,[]); axis off; title('Skeleton'); hold off;
 
@@ -405,8 +351,11 @@ figure; imshow(skeletonMask,[]); axis off; title('Skeleton'); hold off;
 C2Mask = double(C2).*double(Mask);
 minima = ~imregionalmin(C2Mask);
 
+candidateFeatures = double(~minima).*double(Mask);
+[minimaY, minimaX] = find(candidateFeatures == 1);
+
 figure; imshow(C2Mask, []); axis off; title('Coherence 2');
-figure; imshow(minima, []); axis off; title('Minima');
+figure; imshow(minima, []); axis off; title('Minima'); hold on; plot(minimaX, minimaY, 'og', 'MarkerSize',10); hold off;
 
 %% Candidate region(s)
 candidateRegion = ~im2bw(C2Mask,0.5).*double(Mask);
@@ -419,13 +368,13 @@ figure; imshow(candidateRegion,[]); axis off; title('Candidate Region');
 featureGlobal = xor(candidateRegion,candidateRegionWithMinima);
 [globalY, globalX] = find(featureGlobal == 1);
 
-figure; imshow(I,[]); axis off; title('Global Features'); hold on; plot(globalX, globalY, '*c'); hold off;
+figure; imshow(I,[]); axis off; title('Global Features'); hold on; plot(globalX, globalY, '*g','MarkerSize',20); hold off;
 
 %% 3.2) Minutiae
 % cp. Maltoni, chapter 3.7 Minutiae Detection (p. 143-157).
 % Reference: Athi Narayanan S
 % http://sites.google.com/site/athisnarayanan/s_athi1983@yahoo.co.in
-Im = ~xor(skeletonMask, Mask2);
+Im = ~xor(skeletonMask, Mask);
 
 % Window
 hsize = 3;
@@ -469,14 +418,14 @@ featureBifurcation = featureBifurcation(1+border:end-border,1+border:end-border)
 
 %% 3.2.1) Ridge endings
 [ridgeY, ridgeX] = find(featureRidge == 2);
-figure; imshow(skeletonMask,[]); axis off; title('Ridge endings'); hold on; plot(ridgeX, ridgeY, 'rs'); hold off;
-figure; imshow(I,[]); axis off; title('Ridge endings'); hold on; plot(ridgeX, ridgeY, 'rs'); hold off;
+
+figure; imshow(skeletonMask); axis off; title('Ridge endings'); hold on; plot(ridgeX, ridgeY, 'ro'); hold off;
+figure; imshow(I); axis off; title('Ridge endings'); hold on; plot(ridgeX, ridgeY, 'ro'); hold off;
 
 %% 3.2.2) Bifurcations
 [bifurcationY, bifurcationX] = find(featureBifurcation == 4);
-figure; imshow(skeletonMask,[]); axis off; title('Bifurcations'); hold on; plot(bifurcationX, bifurcationY, 'bo'); hold off;
-figure; imshow(I,[]); axis off; title('Bifurcations'); hold on; plot(bifurcationX, bifurcationY, 'bo'); hold off;
-
+figure; imshow(skeletonMask); axis off; title('Bifurcations'); hold on; plot(bifurcationX, bifurcationY, 'bs'); hold off;
+figure; imshow(I); axis off; title('Bifurcations'); hold on; plot(bifurcationX, bifurcationY, 'bs'); hold off;
 
 ##### SOURCE END #####
 --></body></html>
