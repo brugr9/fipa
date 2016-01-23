@@ -1,4 +1,4 @@
-% Discrete surface S for gray-levels g
+% Discrete fpsurface S for gray-levels g
 [greyMax, greyMaxLoc] = max(I(:));
 [greyMin, greyMinLoc] = min(I(:));
 g = greyMax - greyMin;

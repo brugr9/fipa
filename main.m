@@ -29,7 +29,7 @@ clear variables; clear globals; close all; clc;
 %  University of Bologna, Online: <http://bias.csr.unibo.it/fvc2004/>).
 %  We assume the image is in grayscales (white: 255, black: 0).
 
-I = imread('../fp-images/11_4.png');
+I = imread('./fp-images/11_4.png');
 [sizeX, sizeY] = size(I);
 figure; imshow(I); axis off; title('Original Image');
 
@@ -50,7 +50,7 @@ J = fftshift(fft2(double(I)));
 Jh = conv2(J,h);
 Jh = Jh(1+border:end-border,1+border:end-border);
 Ih = abs(ifft2(ifftshift(Jh)));
-%%
+
 figure; imshow(log(max(abs(J),    1e-6)),[]), colormap(jet(64)); axis off; title('Amplitudes'); hold off;
 figure; imshow(log(max(abs(Jh), 1e-6)),[]), colormap(jet(64)); axis off; title('After LoG');  hold off;
 figure; imshow(Ih, []); axis off; title('Reslut'); hold off;
@@ -61,7 +61,7 @@ figure; imshow(Ih, []); axis off; title('Reslut'); hold off;
 [V, Mask] = segmentTexture(I);
 % Q = TODO
 Iseg = double(I).*double(Mask);
-%%
+
 figure; imshow(V, []); axis off; title('Variance'); hold off;
 % figure; imshow(Q, []); axis off; title('Quality'); hold off;
 figure; imshow(Iseg, []); axis off; title('Segmented'); hold off;
@@ -97,23 +97,16 @@ z = .001;
 C = 1 - minima./(Imax+z);
 C = C.*(denom>z);
 
-%% Enhance segmentation using binarized coherence
-thresh = graythresh(C);
-Mask2 = im2bw(C,thresh).*double(Mask);
-CMask = double(C).*double(Mask);
-Iseg2 = Iseg.*Mask2;
-%%
-figure; imshow(CMask,[]); axis off; title('Coherence'); hold off;
-figure; imshow(Iseg2,[]); alpha .5; axis off; title('Segmented 2'); hold off;
-
 %% Maskerading
-GxMask = double(Gx).*double(Mask2);
-GyMask = double(Gy).*double(Mask2);
-DMask  = double(D) .*double(Mask2);
-[x,y,u,v] = directionmap(DMask, 6, Iseg2);
-%%
-figure; imshow(Iseg2,[]); alpha .5; axis off; title('Gradients'); hold on; quiver(GxMask,GyMask); hold off;
-figure; imshow(Iseg2,[]); alpha .5; axis off; title('Directions'); hold on; quiver(x,y,u,v,0,'.','linewidth',1); hold off;
+GxMask = double(Gx).*double(Mask);
+GyMask = double(Gy).*double(Mask);
+DMask  = double(D) .*double(Mask);
+[x,y,u,v] = directionmap(DMask, 6, Iseg);
+CMask = double(C).*double(Mask);
+
+figure; imshow(Iseg,[]);  axis off; title('Gradients');  hold on; quiver(GxMask,GyMask); hold off;
+figure; imshow(Iseg,[]);  axis off; title('Directions'); hold on; quiver(x,y,u,v,0,'.','linewidth',1); hold off;
+figure; imshow(CMask,[]); axis off; title('Coherence');  hold off;
 
 %% 2.4) Binarisation and skeleton
 % Binarisation by threshold (TODO: Thresholded binarisation should be
@@ -124,9 +117,9 @@ binarised = im2bw(I,thresh);
 thinned  = ~bwmorph(~binarised,'thin',Inf); % 'skel'
 skeleton =  bwmorph(thinned,'spur',20);
 
-binarisedMask = binarised.*Mask2;
-skeletonMask = skeleton.*Mask2;
-%%
+binarisedMask = binarised.*Mask;
+skeletonMask = skeleton.*Mask;
+
 figure; imshow(binarisedMask,[]); axis off; title('Binarised'); hold off;
 figure; imshow(skeletonMask,[]); axis off; title('Skeleton'); hold off;
 
@@ -140,8 +133,11 @@ figure; imshow(skeletonMask,[]); axis off; title('Skeleton'); hold off;
 C2Mask = double(C2).*double(Mask);
 minima = ~imregionalmin(C2Mask);
 
+candidateFeatures = double(~minima).*double(Mask);
+[minimaY, minimaX] = find(candidateFeatures == 1);
+
 figure; imshow(C2Mask, []); axis off; title('Coherence 2');
-figure; imshow(minima, []); axis off; title('Minima');
+figure; imshow(minima, []); axis off; title('Minima'); hold on; plot(minimaX, minimaY, 'og', 'MarkerSize',10); hold off;
 
 %% Candidate region(s)
 candidateRegion = ~im2bw(C2Mask,0.5).*double(Mask);
@@ -154,13 +150,13 @@ figure; imshow(candidateRegion,[]); axis off; title('Candidate Region');
 featureGlobal = xor(candidateRegion,candidateRegionWithMinima);
 [globalY, globalX] = find(featureGlobal == 1);
 
-figure; imshow(I,[]); axis off; title('Global Features'); hold on; plot(globalX, globalY, '*c'); hold off;
+figure; imshow(I,[]); axis off; title('Global Features'); hold on; plot(globalX, globalY, '*g','MarkerSize',20); hold off;
 
 %% 3.2) Minutiae
 % cp. Maltoni, chapter 3.7 Minutiae Detection (p. 143-157).
 % Reference: Athi Narayanan S
 % http://sites.google.com/site/athisnarayanan/s_athi1983@yahoo.co.in
-Im = ~xor(skeletonMask, Mask2);
+Im = ~xor(skeletonMask, Mask);
 
 % Window
 hsize = 3;
@@ -204,10 +200,11 @@ featureBifurcation = featureBifurcation(1+border:end-border,1+border:end-border)
 
 %% 3.2.1) Ridge endings
 [ridgeY, ridgeX] = find(featureRidge == 2);
-figure; imshow(skeletonMask); axis off; title('Ridge endings'); hold on; plot(ridgeX, ridgeY, 'rs'); hold off;
-figure; imshow(I); axis off; title('Ridge endings'); hold on; plot(ridgeX, ridgeY, 'rs'); hold off;
+
+figure; imshow(skeletonMask); axis off; title('Ridge endings'); hold on; plot(ridgeX, ridgeY, 'ro'); hold off;
+figure; imshow(I); axis off; title('Ridge endings'); hold on; plot(ridgeX, ridgeY, 'ro'); hold off;
 
 %% 3.2.2) Bifurcations
 [bifurcationY, bifurcationX] = find(featureBifurcation == 4);
-figure; imshow(skeletonMask); axis off; title('Bifurcations'); hold on; plot(bifurcationX, bifurcationY, 'bo'); hold off;
-figure; imshow(I); axis off; title('Bifurcations'); hold on; plot(bifurcationX, bifurcationY, 'bo'); hold off;
+figure; imshow(skeletonMask); axis off; title('Bifurcations'); hold on; plot(bifurcationX, bifurcationY, 'bs'); hold off;
+figure; imshow(I); axis off; title('Bifurcations'); hold on; plot(bifurcationX, bifurcationY, 'bs'); hold off;
