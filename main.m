@@ -35,22 +35,29 @@ figure; imshow(I); axis off; title('Original Image');
 
 %% 2) Preprocessing
 %% 2.1) Quality Enhancement
+% Sharpen image
+Is = imsharpen(I,'Radius', 1.5,'Amount',1.2); % 
+figure; imshow(Is, []); axis off; title('Sharpened'); hold off;
+
+%%
 % To largen the image quality we apply a high-pass filter (Laplacian of
 % Gaussian LoG). First, we transform the image to its frequency domain
 % using a Fast Fourier Transformation (FFT) and a shift. Then we augment
 % the amplitude of the dominant frequencies over relatively small regions
 % and finally retransform the image back to the spatial domain by the use
 % of an inverse FFT (IFFT).
-hsize = 3;
-border = (hsize-1)/2;
+hsize = 7;
 hsigma = 0.2;
 h = fspecial('log', hsize, hsigma);
 
-J = fftshift(fft2(double(I)));
-Jh = conv2(J,h);
-Jh = Jh(1+border:end-border,1+border:end-border);
-Ih = abs(ifft2(ifftshift(Jh)));
+% Ih = imfilter(Is,h);
+% Ih = I - Ih;
 
+J = fftshift(fft2(double(Is)));
+Jh = imfilter(J,h);
+Jh = J - Jh;
+Ih = abs(ifft2(ifftshift(Jh)));
+% 
 figure; imshow(log(max(abs(J),    1e-6)),[]), colormap(jet(64)); axis off; title('Amplitudes'); hold off;
 figure; imshow(log(max(abs(Jh), 1e-6)),[]), colormap(jet(64)); axis off; title('After LoG');  hold off;
 figure; imshow(Ih, []); axis off; title('Reslut'); hold off;
@@ -58,9 +65,9 @@ figure; imshow(Ih, []); axis off; title('Reslut'); hold off;
 %% 2.2) Variance, Quality and Segmentation
 % Segmentation using Gabor filters, cp. Maltoni, chapter 3.4 Segmentation
 % (p. 116-119).
-[V, Mask] = segmentTexture(I);
+[V, Mask] = segmentTexture(Ih);
 % Q = TODO
-Iseg = double(I).*double(Mask);
+Iseg = double(Ih).*double(Mask);
 
 figure; imshow(V, []); axis off; title('Variance'); hold off;
 % figure; imshow(Q, []); axis off; title('Quality'); hold off;
@@ -70,27 +77,29 @@ figure; imshow(Iseg, []); axis off; title('Segmented'); hold off;
 % cp. Maltoni, chapter 3.2 Local Ridge Orientation, especially 3.2.1
 % Gradient-based approaches, p. 102-106 and Bazen/Gerez.
 
-%% Gradients Gx and Gy
+%Gradients Gx and Gy
 hsize = 7;
 hsigma = 1;
 h = fspecial('gaussian', hsize, hsigma);
+
 [hx,hy] = gradient(h);
 Gx = filter2(hx, I);
 Gy = filter2(hy, I);
 
-%% Local ridge orientation D (in radiant)
+% Local ridge orientation D (in radiant)
 hsize = 17;
 hsigma = 3;
 h = fspecial('gaussian', hsize, hsigma);
+
 Gxy = Gx.*Gy; Gxy = 2*filter2(h, Gxy);
-Gxx = Gx.^2;  Gxx = filter2(h, Gxx); 
-Gyy = Gy.^2;  Gyy = filter2(h, Gyy);
+Gxx = Gx.^2;  Gxx =   filter2(h, Gxx); 
+Gyy = Gy.^2;  Gyy =   filter2(h, Gyy);
 denom = sqrt((Gxx - Gyy).^2 + Gxy.^2) + eps;
-sin2theta = Gxy./denom;         sin2theta = filter2(h, sin2theta);
+sin2theta =       Gxy./denom;   sin2theta = filter2(h, sin2theta);
 cos2theta = (Gxx-Gyy)./denom;   cos2theta = filter2(h, cos2theta);
 D = pi/2 + atan2(sin2theta,cos2theta)/2;
 
-%% Coherence C as reliability of orientation
+% Coherence C as reliability of orientation
 minima = (Gyy+Gxx)/2 - (Gxx-Gyy).*cos2theta/2 - Gxy.*sin2theta/2;
 Imax = Gyy+Gxx - minima;
 z = .001;
@@ -200,11 +209,47 @@ featureBifurcation = featureBifurcation(1+border:end-border,1+border:end-border)
 
 %% 3.2.1) Ridge endings
 [ridgeY, ridgeX] = find(featureRidge == 2);
-
 figure; imshow(skeletonMask); axis off; title('Ridge endings'); hold on; plot(ridgeX, ridgeY, 'ro'); hold off;
 figure; imshow(I); axis off; title('Ridge endings'); hold on; plot(ridgeX, ridgeY, 'ro'); hold off;
 
 %% 3.2.2) Bifurcations
 [bifurcationY, bifurcationX] = find(featureBifurcation == 4);
+figure; imshow(skeletonMask); axis off; title('Bifurcations'); hold on; plot(bifurcationX, bifurcationY, 'bs'); hold off;
+figure; imshow(I); axis off; title('Bifurcations'); hold on; plot(bifurcationX, bifurcationY, 'bs'); hold off;
+
+%% 3.2.3) Minutiae extraction by hit-or-miss
+Im = xor(skeletonMask, Mask);
+% figure; imshow(Im); axis off; title('Im');
+
+SE1 = [ 0 0; 
+        1 0; 
+        0 0];
+
+SE2 = [ 1 1; 
+        0 1; 
+        1 1];
+
+
+%% 3.2.3.1) Ridge endings
+re = zeros(sizeX, sizeY);
+for i = 1:4
+    SE1 = rot90(SE1);
+    SE2 = rot90(SE2);
+    re = or(re,bwhitmiss(double(Im),SE1,SE2));
+end
+[ridgeY, ridgeX] = find(re == 1);
+
+figure; imshow(skeletonMask); axis off; title('Ridge endings'); hold on; plot(ridgeX, ridgeY, 'ro'); hold off;
+figure; imshow(I); axis off; title('Ridge endings'); hold on; plot(ridgeX, ridgeY, 'ro'); hold off;
+%% 3.2.3.2) Bifurcations
+bf = zeros(sizeX, sizeY);
+for i = 1:4
+    SE1 = rot90(SE1);
+    SE2 = rot90(SE2);
+    bf = or(bf,bwhitmiss(double(Im),SE2,SE1));
+end
+[ridgeY, ridgeX] = find(bf == 1);
+[bifurcationY, bifurcationX] = find(bf == 1);
+
 figure; imshow(skeletonMask); axis off; title('Bifurcations'); hold on; plot(bifurcationX, bifurcationY, 'bs'); hold off;
 figure; imshow(I); axis off; title('Bifurcations'); hold on; plot(bifurcationX, bifurcationY, 'bs'); hold off;
