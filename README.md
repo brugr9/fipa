@@ -1,13 +1,6 @@
-# fipa
+# fipa - Fingerprint Analysis
+Preprocessing and Feature Extraction.
 
-### Fingerprint Analysis
-##### Description
-Preprocessing and Feature Extraction 
-<hr>
-##### Keywords
-- Biometrics
-- Computer Vision
-- Matlab®
-
-##### Report
-- <a target="_blank" href="https://www.hashdoc.com/documents/413951/merkmalsextraktion-am-fingerabdruck">Report</a> (on Hashdoc)
+- Keywords: Biometrics, Computer Vision.
+- Technology: Matlab, Image Processing Toolbox.
+- [Report](https://www.hashdoc.com/documents/413951/merkmalsextraktion-am-fingerabdruck).
