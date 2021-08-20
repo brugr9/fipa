@@ -1,4 +1,4 @@
-# fipa - Fingerprint Analysis
+# FIPA - Fingerprint Analysis
 Preprocessing and Feature Extraction.
 
 - Keywords: Biometrics, Computer Vision, Image Processing.
