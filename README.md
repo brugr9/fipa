@@ -6,8 +6,8 @@
 - [MathWorks File Exchange](https://ch.mathworks.com/matlabcentral/fileexchange/69424-fingerprint-analysis-preprocessing-and-feature-extraction)
 
 ---
-![Ridge Endings](html/main_17.jpg "Ridge Endings")![Bifurcations](html/main_19.jpg "Bifurcations")
-<br>*Fig.: Ridge Endings and Bifurcations*
+
+<img src="html/main_15.png" alt="Global Features" width="30%"/><img src="html/main_17.jpg" alt="Ridge Endings" width="30%"/><img src="html/main_19.jpg" alt="Bifurcations" width="30%"/><br>*Fig.: Global Features, Ridge Endings and Bifurcations*
 
 ---
 
