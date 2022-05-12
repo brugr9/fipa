@@ -1,9 +1,9 @@
 # Fingerprint Analysis &ndash; Preprocessing and Feature Extraction
 
 - Keywords: Biometrics, Computer Vision, Image Processing
-- Technology: Mathworks&trade; MATLAB with Image Processing Toolbox
+- Technology: MathWorks&reg; MATLAB&trade; with Image Processing Toolbox
 - [Report](https://www.slideshare.net/RolandBruggmann/merkmalsextraktion-am-fingerabdruck) on SlideShare
-- [MathWorks File Exchange](https://ch.mathworks.com/matlabcentral/fileexchange/69424-fingerprint-analysis-preprocessing-and-feature-extraction)
+- [Project](https://ch.mathworks.com/matlabcentral/fileexchange/69424-fingerprint-analysis-preprocessing-and-feature-extraction) on MathWorks&reg; File Exchange
 
 ---
 
@@ -27,7 +27,7 @@ Verification with physiological methods in biometry consists of five steps as fo
 
 In civil applications such as smartphones and laptops, a digital sample is in most cases acquired using a sweep sensor. The pre-processing and extraction of the characteristics are carried out using digital image processing methods. Finally, the local coordinates of the characteristics serve as a template, both for the initial acquisition and for the samples. Finally, the template is compared with the reference data. The resulting vector is evaluated using statistical methods.
 
-For this challenge we focus on the second step: Preprocess and extraction of characteristics by the gradient based method of [Bazen/Gerez, 2002]. Further the Image Processing Toolbox from Mathworks is used for image processing. The raw image is a fingerprint from a database of [FVC, 2004].
+For this challenge we focus on the second step: Preprocess and extraction of characteristics by the gradient based method of [Bazen/Gerez, 2002]. Further the Image Processing Toolbox from MathWorks&reg; is used for image processing. The raw image is a fingerprint from a database of [FVC, 2004].
 
 ## Cite As
 
